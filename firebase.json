@@ -1,0 +1,86 @@
+{
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "travel-blog"
+    }
+  ],
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "**/.*"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "function": {
+          "functionId": "journal",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/blog{,/**}",
+        "function": {
+          "functionId": "journal",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/",
+        "function": {
+          "functionId": "journal",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/index.html",
+        "function": {
+          "functionId": "journal",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/sitemap.xml",
+        "function": {
+          "functionId": "journal",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/robots.txt",
+        "function": {
+          "functionId": "journal",
+          "region": "us-central1"
+        }
+      }
+    ],
+    "headers": [
+      {
+        "source": "/admin/**",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, nofollow"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "no-store"
+          }
+        ]
+      }
+    ],
+    "redirects": [
+      {
+        "source": "/blog.html",
+        "destination": "/blog/",
+        "type": 301
+      }
+    ]
+  },
+  "database": {
+    "rules": "database.rules.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}

@@ -1,0 +1,1 @@
+{"name":"travel-vacation-adventure","private":true,"type":"module","scripts":{"build":"node scripts/prepare.mjs","test":"node --test tests/*.test.cjs","deploy":"npm run build && firebase deploy","admin":"node scripts/set-admin.cjs"},"devDependencies":{"firebase-tools":"^14.0.0"}}
