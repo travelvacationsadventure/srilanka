@@ -9,7 +9,35 @@ function friendly(e){return ({'auth/invalid-credential':'Email or password is in
 async function api(path='',method='GET',body){const token=await auth.currentUser.getIdToken();const response=await fetch('/api/posts'+path,{method,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});const result=await response.json().catch(()=>({error:'Server unavailable. Check your Functions and Hosting deployment.'}));if(!response.ok)throw Error(result.error||'Request failed');return result;}
 $('login-form').onsubmit=async e=>{e.preventDefault();$('signin').disabled=true;$('login-message').textContent='Signing in…';try{await setPersistence(auth,browserSessionPersistence);await signInWithEmailAndPassword(auth,$('email').value.trim(),$('password').value);$('password').value='';}catch(e){$('login-message').textContent=friendly(e);}finally{$('signin').disabled=false;}};
 $('reset').onclick=async()=>{if(!$('email').validity.valid||!$('email').value){$('login-message').textContent='Enter your email address first.';return;}try{await sendPasswordResetEmail(auth,$('email').value.trim());$('login-message').textContent='If that account exists, a password reset email is on its way.';}catch(e){$('login-message').textContent=friendly(e);}};
-onAuthStateChanged(auth,async user=>{const session=++sessionNumber;$('login').hidden=!!user;$('app').hidden=!user;if(!user){posts=[];current=null;dirty=false;$('content').innerHTML='';$('post-form').reset();$('post-list').innerHTML='';$('library').hidden=false;$('editor-view').hidden=true;return;}$('account-email').textContent=user.email;try{const token=await user.getIdTokenResult(true);if(!token.claims.admin)throw Error('Complete the one-time admin setup for this email, then sign in again.');await load();}catch(e){if(session!==sessionNumber)return;await signOut(auth);$('login-message').textContent=friendly(e);}});
+onAuthStateChanged(auth, async user => {
+  const session = ++sessionNumber;
+
+  $('login').hidden = !!user;
+  $('app').hidden = !user;
+
+  if (!user) {
+    posts = [];
+    current = null;
+    dirty = false;
+    $('content').innerHTML = '';
+    $('post-form').reset();
+    $('post-list').innerHTML = '';
+    $('library').hidden = false;
+    $('editor-view').hidden = true;
+    return;
+  }
+
+  $('account-email').textContent = user.email;
+
+  try {
+    await load();
+  } catch (e) {
+    if (session !== sessionNumber) return;
+    $('login').hidden = false;
+    $('app').hidden = true;
+    $('login-message').textContent = friendly(e);
+  }
+});
 $('logout').onclick=async()=>{if(canLeave())await signOut(auth);};
 async function load(){const result=await api();posts=result.posts.sort((a,b)=>b.date.localeCompare(a.date));draw();}
 function draw(){const q=$('search').value.toLowerCase(),cat=$('category-filter').value;const categories=[...new Set(posts.map(p=>p.category).filter(Boolean))].sort();$('category-filter').innerHTML='<option value="">All categories</option>'+categories.map(c=>`<option ${c===cat?'selected':''}>${esc(c)}</option>`).join('');$('categories').innerHTML=categories.map(c=>`<option value="${esc(c)}">`).join('');$('total').textContent=posts.length;$('nav-count').textContent=posts.length;$('published').textContent=posts.filter(p=>p.status==='published').length;$('drafts').textContent=posts.filter(p=>p.status==='draft').length;const result=posts.filter(p=>(filter==='all'||p.status===filter)&&(!cat||p.category===cat)&&`${p.title} ${p.author} ${(p.tags||[]).join(' ')}`.toLowerCase().includes(q));$('post-list').innerHTML=result.map(p=>`<tr><td><div class="story-cell"><img src="${esc(p.image||'/images/coast.jpg')}" alt="" loading="lazy"><div><b>${esc(p.title)}</b><small>${esc(p.category||'Uncategorized')} · ${esc(p.author)}</small></div></div></td><td><span class="badge ${p.status}">${p.status==='published'?'● Published':'◌ Draft'}</span></td><td>${esc(p.date)}</td><td><div class="row-actions"><button data-edit="${p.slug}" aria-label="Edit ${esc(p.title)}">Edit</button>${p.status==='published'?`<a href="/blog/${p.slug}" target="_blank" rel="noopener" aria-label="View story">↗</a>`:''}<button class="delete" data-delete="${p.slug}" aria-label="Delete ${esc(p.title)}">×</button></div></td></tr>`).join('');$('empty').hidden=!!result.length;$('result-count').textContent=`Showing ${result.length} of ${posts.length} stories`;}
